@@ -28,6 +28,10 @@ int start_kernel() {
 		for (volatile int i = 0; i < 1000000000; i++)
 			;
 
+		// current++;
+		// if (current >= PROC_NR)
+		// 	current = 0;
+
 		current = (current + 1) % PROC_NR;
 	};
 

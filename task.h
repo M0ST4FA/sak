@@ -1,7 +1,7 @@
 #pragma once
 
 #define USR_STACK_SZ 256
-#define PROC_NR 2
+#define PROC_NR 5
 
 extern unsigned int stacks[PROC_NR][USR_STACK_SZ];
 extern void (*entry_points[PROC_NR])(void);
