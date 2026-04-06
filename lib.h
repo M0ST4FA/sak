@@ -1,3 +1,5 @@
+#pragma once
+
 #define ADD_MAX 10
 #define BUF_SIZE 20
 #define ERANGE 2
