@@ -31,6 +31,9 @@ ${BUILD_DIR}:
 clean:
 	rm -rf ${BUILD_DIR} 
 
+bear:
+	bear -- make ${TARGET}
+
 run-qemu: all
 	qemu-system-arm \
 		-M versatilepb \

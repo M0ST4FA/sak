@@ -1,22 +1,10 @@
 .global activate
-.global context_switch
-.global save_context
-.global restore_context
-
-save_context:
-	stmfd r0!, {r4-r11, lr} @ store callee-saved registers and LR
-	bx lr
-
-restore_context:
-	ldmfd r0!, {r4-r11, lr} @ restore callee-saved registers an LR
-	bx lr
-
-/* High-level switch: save old, load new */
-context_switch:
-@ r0 = pointer to old task stack
-@ r1 = pointer to new task stack
+.global kernel_return
 
 activate:
+mov ip, sp
+push {r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+
 @ get SPSR and lr
 ldmfd r0!, {ip, lr}
 msr SPSR, ip
@@ -24,6 +12,22 @@ msr SPSR, ip
 cps #0x1F @ switch to system mode
 mov sp, r0
 pop {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}
-cps #013 @ switch to back supervisor mode
+cps #0x13 @ switch to back supervisor mode
 
 movs pc, lr
+
+kernel_return:
+	cps #0x1F
+	
+	push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr} @ save task registers onto its stack
+	mov r0, sp 													   @ save task sp into r0 to survive mode switch
+
+	cps #0x13
+
+	mrs ip, SPSR        @ save the task's mode into ip
+	stmfd r0!, {ip, lr} @ just like push, but on r0 instead of sp; r0 is the sp of the task;
+
+	pop {r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}	
+	mov sp, ip
+	bx lr
+
