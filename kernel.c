@@ -3,29 +3,33 @@
 #include "task.h"
 
 int start_kernel() {
-	unsigned int *saved_stack;
+	unsigned int *saved_stack, current = 0;
+	char buf[BUF_SIZE] = {0};
 
 	setup_tasks();
 
 	print_string("Kernel started...\n");
 
-	saved_stack = activate(tasks[0]);
-	tasks[0] = saved_stack;
+	// scheduling loop
+	while (1) {
 
-	print_string("Back to kernel...\n");
+		print_string("Scheduling task: ");
+		if (!inttostr(current, buf))
+			print_string(buf);
 
-	saved_stack = activate(tasks[1]);
-	tasks[1] = saved_stack;
+		print_char('\n');
 
-	print_string("Back to kernel...\n");
+		saved_stack = activate(tasks[current]);
+		tasks[current] = saved_stack;
 
-	saved_stack = activate(tasks[0]);
-	tasks[0] = saved_stack;
+		print_string("Back to kernel...\n");
 
-	print_string("Back to kernel...\n");
+		// add some delay
+		for (volatile int i = 0; i < 1000000000; i++)
+			;
 
-	while (1)
-		;
+		current = (current + 1) % PROC_NR;
+	};
 
 	print_string("After loop...should never reach here\n");
 
