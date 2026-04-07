@@ -1,5 +1,6 @@
 .global activate
 .global svc_entry
+.global irq_entry
 
 /* 
 Switch to process whose stack is passed as first argument.
@@ -135,3 +136,6 @@ svc_entry:
 	pop {r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}	
 	mov sp, ip
 	bx lr
+
+irq_entry
+	

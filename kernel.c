@@ -4,8 +4,25 @@
 #include "syscall.h"
 #include "task.h"
 #include "types.h"
+#include "versatilepb.h"
 
 int panic_cause = PANIC_NR; // we start with 3 tasks (static system tasks)
+
+void timer_setup(unsigned int timer, int seconds) {
+	volatile unsigned int *t = (unsigned int *)timer;
+
+	*t = seconds * 1000000;
+	*(t + TIMER_CONTROL) = TIMER_EN | TIMER_ONESHOT | TIMER_32BIT;
+}
+
+void block(unsigned int timer, int seconds) {
+	timer_setup(timer, seconds);
+
+	while ((*((unsigned int *)timer + TIMER_VALUE)) != 0)
+		;
+
+	print_string("tick\n");
+}
 
 void start_kernel(void) {
 	unsigned int *saved_stack, current = 0, ret;
@@ -83,8 +100,7 @@ void start_kernel(void) {
 		}
 
 		// add some delay
-		for (volatile int i = 0; i < 1000000000; i++)
-			;
+		block((unsigned int)TIMER0, 2);
 
 		// current++;
 		// if (current >= PROC_NR)
