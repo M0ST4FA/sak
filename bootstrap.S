@@ -1,5 +1,4 @@
 .global _start
-.global syscall
 
 _start:
 	/* setup kernel stack */
@@ -23,9 +22,5 @@ keep_loading:
 
 interrupt_table:
 	ldr pc, svc_entry_address
-	svc_entry_address: .word kernel_return
+	svc_entry_address: .word svc_entry
 interrupt_table_end:
-
-syscall:
-	svc #0
-	bx lr

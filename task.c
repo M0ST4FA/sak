@@ -2,7 +2,7 @@
 #include "usr.h"
 
 unsigned int stacks[PROC_NR][USR_STACK_SZ];
-void (*entry_points[PROC_NR])(void) = {print_lover, lesser_print_lover, print_lover, print_lover, lesser_print_lover};
+void (*entry_points[PROC_NR])(void) = {print_lover, lesser_print_lover, fork_lover, fork_lover};
 unsigned int *tasks[PROC_NR];
 
 unsigned int *init_task(unsigned int *stack, void (*entry_point)(void)) {

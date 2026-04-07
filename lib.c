@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "types.h"
 #include "versatilepb.h"
 
 void print_char(char c) {
@@ -14,14 +15,24 @@ int add(int a, int b) {
 	return a + b;
 }
 
-void memcpy(char *dst, char *src, int n) {
-	for (int i = 0; i < n; i++)
-		*(dst + i) = *(src + i);
+void *memcpy(char *dst, char *src, int n) {
+	char *d = dst, *s = src;
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		d[i] = s[i];
+
+	return d;
 }
 
-void memset(char *dst, char val, int n) {
-	for (int i = 0; i < n; i++)
-		dst[i] = val;
+void *memset(char *dst, char val, int n) {
+	char *d = dst;
+	size_t i;
+
+	for (i = 0; i < n; i++)
+		d[i] = val;
+
+	return d;
 }
 
 void reverse(char *buf, int size) {

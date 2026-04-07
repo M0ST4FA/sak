@@ -1,5 +1,5 @@
 #pragma once
 
-unsigned int *activate(unsigned int *);
-void syscall(void);
-void kernel_return(void);
+extern unsigned int *activate(unsigned int *);
+extern void kernel_yield(void);
+extern int fork(void);
