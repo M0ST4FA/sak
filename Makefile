@@ -5,6 +5,9 @@ LDFLAGS := -N -T linker.ld -nostdlib -static
 
 BUILD_DIR := build
 
+# SRC := $(wildcard *.c)
+SRC :=
+
 TARGET := ${BUILD_DIR}/kernel.elf
 ASM-OBJS := ${BUILD_DIR}/bootstrap.o ${BUILD_DIR}/context_switch.o ${BUILD_DIR}/syscall.o
 C-OBJS := ${BUILD_DIR}/kernel.o ${BUILD_DIR}/lib.o ${BUILD_DIR}/usr.o ${BUILD_DIR}/task.o
@@ -15,9 +18,9 @@ OBJS := ${ASM-OBJS} ${C-OBJS}
 all: ${TARGET}
 
 # rule for linking .o into kernel.elf
-${TARGET}: ${OBJS} | ${BUILD_DIR}
+${TARGET}: ${OBJS} ${SRC} | ${BUILD_DIR}
 	${LD} ${LDFLAGS} -o $@ $^
-	
+
 # rule for C -> .o
 ${BUILD_DIR}/%.o: %.c | ${BUILD_DIR}
 	${CC} ${CFLAGS} -c -o $@ $<
@@ -36,7 +39,7 @@ clean:
 bear:
 	bear -- make ${TARGET}
 
-run-qemu: all
+run-qemu: ${TARGET}
 	qemu-system-arm \
 		-M versatilepb \
 		-cpu cortex-a8 \
@@ -44,7 +47,7 @@ run-qemu: all
 		-nographic \
 		-kernel ${TARGET}
 
-run-qemu-debug: all
+run-qemu-debug: ${TARGET}
 	qemu-system-arm \
 		-M versatilepb \
 		-cpu cortex-a8 \

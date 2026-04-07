@@ -21,22 +21,24 @@ void lesser_print_lover(void) {
 		kernel_yield();
 }
 
-void fork_child(void) {
-	print_string("I'm a very cute child of fork\n");
-
-	while (1)
-		kernel_yield();
-}
-
 void fork_lover(void) {
-	int child_pid = fork();
+	int child_pid;
+	char buf[BUF_SIZE];
 
 	print_string("I'm about to have a child...\n");
 
-	if (!child_pid)
-		fork_child();
+	child_pid = fork();
+	if (child_pid == 0) {
+		print_string("Inside child. Never though I'm gonna make it, but here I'm!\n");
 
-	print_string("Having a child is easier than what I expected...\n");
+		while (1)
+			kernel_yield();
+	}
+
+	inttostr(child_pid, buf);
+	print_string("Having a child is easier than what I expected...PID: ");
+	print_string(buf);
+	print_char('\n');
 
 	while (1)
 		kernel_yield();

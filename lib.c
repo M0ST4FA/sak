@@ -11,6 +11,13 @@ void print_string(const char *str) {
 		print_char(*str++);
 }
 
+void print_int(int i) {
+	char buf[BUF_SIZE] = {0};
+
+	inttostr(i, buf);
+	print_string(buf);
+}
+
 int add(int a, int b) {
 	return a + b;
 }
