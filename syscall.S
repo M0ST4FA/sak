@@ -22,3 +22,24 @@ fork:
 	mov r7, #SYSCALL_FORK
 	svc #0
 	bx lr
+
+.global getpid
+getpid:
+	push {r7}
+	mov r7, #SYSCALL_GETPID
+	svc #0
+	bx lr
+
+.global write
+write:
+	push {r7}
+	mov r7, #SYSCALL_WRITE
+	svc #0
+	bx lr
+
+.global read
+read:
+	push {r7}
+	mov r7, #SYSCALL_READ
+	svc #0
+	bx lr

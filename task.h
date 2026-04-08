@@ -1,6 +1,6 @@
 #pragma once
 
-#define USR_STACK_SZ 256
+#define USR_STACK_SZ 1024
 #define PROC_NR 10
 
 // Indicies into top of userspace stack (task struct fields)
@@ -25,6 +25,8 @@
 enum task_state {
 	TS_FREE,
 	TS_RUNNABLE,
+	TS_WAIT_READ,
+	TS_WAIT_WRITE,
 };
 
 struct task {
