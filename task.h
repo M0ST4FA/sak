@@ -39,8 +39,9 @@ extern int task_count;
 
 extern unsigned int stacks[PROC_NR][USR_STACK_SZ];
 extern struct task tasks[PROC_NR];
+extern unsigned int current;
 
 unsigned int *task_init(unsigned int *stack, void (*entry_point)(void));
 int task_entry_available(int i);
 int task_next_pid(void);
-void tasks_setup(void);
+void tasks_init(void);

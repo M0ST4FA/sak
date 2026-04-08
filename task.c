@@ -2,6 +2,7 @@
 #include "usr.h"
 
 int task_count = 3, last_pid = 2; // 3 because of initial task count
+unsigned int current = 0;
 
 unsigned int stacks[PROC_NR][USR_STACK_SZ];
 struct task tasks[PROC_NR] = {
@@ -41,7 +42,7 @@ int task_next_pid(void) {
 	return last_pid;
 }
 
-void tasks_setup(void) {
+void tasks_init(void) {
 	int i;
 
 	for (i = 0; i < task_count; i++) {

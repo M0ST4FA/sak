@@ -10,7 +10,9 @@ SRC :=
 
 TARGET := ${BUILD_DIR}/kernel.elf
 ASM-OBJS := ${BUILD_DIR}/bootstrap.o ${BUILD_DIR}/context_switch.o ${BUILD_DIR}/syscall.o
-C-OBJS := ${BUILD_DIR}/kernel.o ${BUILD_DIR}/lib.o ${BUILD_DIR}/usr.o ${BUILD_DIR}/task.o
+C-OBJS := ${BUILD_DIR}/kernel.o ${BUILD_DIR}/lib.o ${BUILD_DIR}/usr.o \
+			${BUILD_DIR}/task.o ${BUILD_DIR}/panic.o ${BUILD_DIR}/timer.o \
+			${BUILD_DIR}/sysent.o ${BUILD_DIR}/ipc.o
 OBJS := ${ASM-OBJS} ${C-OBJS}
 
 .PHONY: all clean run-qemu run-qemu-debug
