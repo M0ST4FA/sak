@@ -12,7 +12,7 @@ kernel_yield:
 
 	mov r7, #SYSCALL_YIELD 	@ syscall number for yielding to the kernel
 	svc #0					@ trap into the kernel syscall handler; executed in the context of the current process
-	pop {r7}
+	@ pop {r7} not needed as activate() restores it
 	/* move back to user space; do not store anything in link register (which preserves) */
 	bx lr
 
@@ -21,5 +21,4 @@ fork:
 	push {r7}
 	mov r7, #SYSCALL_FORK
 	svc #0
-	pop {r7}
 	bx lr

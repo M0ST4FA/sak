@@ -12,13 +12,13 @@ void print_lover(void) {
 
 	// make sure if the task doesn't have anything to do, it keeps trapping into the kernel
 	while (1)
-		kernel_yield();
+		;
 }
 
 void lesser_print_lover(void) {
 	print_string("In other task\n");
 	while (1)
-		kernel_yield();
+		;
 }
 
 void fork_lover(void) {
@@ -32,7 +32,7 @@ void fork_lover(void) {
 		print_string("Inside child. Never though I'm gonna make it, but here I'm!\n");
 
 		while (1)
-			kernel_yield();
+			;
 	}
 
 	inttostr(child_pid, buf);
@@ -41,5 +41,5 @@ void fork_lover(void) {
 	print_char('\n');
 
 	while (1)
-		kernel_yield();
+		;
 }

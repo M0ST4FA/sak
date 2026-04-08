@@ -8,20 +8,21 @@
 
 int panic_cause = PANIC_NR; // we start with 3 tasks (static system tasks)
 
-void timer_setup(unsigned int timer, int seconds) {
-	volatile unsigned int *t = (unsigned int *)timer;
+void timer_setup(volatile unsigned int *timer, int mode, int seconds) {
+	// 1. Tell VIC to accept interrupts from timer0
+	*(PIC + PIC_REG_INTEN) = PIC_MASK_TIMER01;
 
-	*t = seconds * 1000000;
-	*(t + TIMER_CONTROL) = TIMER_EN | TIMER_ONESHOT | TIMER_32BIT;
+	// 2. Program the timer
+	*timer = seconds * 1000000;
+	*(timer + TIMER_CONTROL) = TIMER_EN | mode | TIMER_32BIT | TIMER_INTEN;
 }
 
-void block(unsigned int timer, int seconds) {
-	timer_setup(timer, seconds);
+void wait_seconds(int seconds) { // kernel uses TIMER1
+	timer_setup(TIMER1, TIMER_ONESHOT, seconds);
 
-	while ((*((unsigned int *)timer + TIMER_VALUE)) != 0)
-		;
+	asm volatile("wfi"); // irq fires -> fallthrow
 
-	print_string("tick\n");
+	print_string("tick: kernel (which is to say, entire machine) was resting for some time...\n");
 }
 
 void start_kernel(void) {
@@ -29,6 +30,8 @@ void start_kernel(void) {
 	char buf[BUF_SIZE] = {0};
 
 	tasks_setup();
+	// setup system timer
+	timer_setup(TIMER0, TIMER_PERIODIC, 2);
 
 	print_string("Kernel started...\n");
 
@@ -94,17 +97,23 @@ void start_kernel(void) {
 				child_sp[R0] = 0;
 			};
 				break;
+			case -PIC_IRQ_TIMER01:
+				if (*(TIMER0 + TIMER_MIS)) { // timer went off, i.e., not spurious or bug
+					print_string("system tick\n");
+					*(TIMER0 + TIMER_INTCLR) = 1;
+				}
+				if (*(TIMER1 + TIMER_MIS)) {
+					*(TIMER1 + TIMER_INTCLR) = 1;
+					print_string("kernel tick\n");
+				}
+				break;
+
 			default:
 				panic_cause = PANIC_SYSCALL;
 				goto panic;
 		}
 
-		// add some delay
-		block((unsigned int)TIMER0, 2);
-
-		// current++;
-		// if (current >= PROC_NR)
-		// 	current = 0;
+		wait_seconds(1);
 
 		// 2. Select next process to run
 		do {

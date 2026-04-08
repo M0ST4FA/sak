@@ -1,3 +1,6 @@
+#include "versatilepb.h"
+#include "armv7.h"
+
 .global activate
 .global svc_entry
 .global irq_entry
@@ -32,25 +35,34 @@ activate:
 	============================================================================ */
 
 	/*
-	Right now, leaving userspace is only voluntary. In particular, it only happens
-	via svc_entry().
+	Leaving userspace is:
+		1. Voluntary thorugh svc_entry()
+		2. Involuntary through interrupt
+	
+	In svc_entry() or irq_entry(), userspace context is preserved on top of userspace
+	stack. We just pop in the same order from userspace stack.
+	The top of userspace stack for a non-running process allways stores most of itself
+	context. The rest of the context is stored in the task struct in the tasks table.
+	All tables are indexed by proc pid.
 
-	In svc_entry(), userspace context is preserved on top of userspace stack.
-	We just pop in the same order from userspace stack.
-	The top of userspace stack is our mobile "task struct", for simplicity.
+	Bear in mind that context switching is just a function call. This is true for
+	both syscalls and interrupts.
+	Just like functions preserve state on the top of their stack frame, you can think
+	about this in a similar fashion.
 
-	Bear in mind that context switching is just a function call. Just like
-	functions preserve state on the top of their stack frame, you can think of
-	this in a similar fashion.
 	In particular, think of each CPU as having a stack of contexts.
-	The stack of contexts corresponds to the stack of a process.
-	In this stack of contexts, each context has its own stack.
-	This is analogous to the stack frame of a function in the stack of a proc.
+	There are two types of contexts:
+		1. Process context, which consists of the CPU + memory state of a process
+		2. Interrupt context, which consists of the CPU + memory state of an interrupt
+			handler.
+	In this stack of contexts, each context has its own stack, process stack or interrupt
+	stack. It also has other metadata (like task struct of current task).
+	A single context is analogous to the stack frame of a function in the stack of a proc.
 	The stack frame itself is a stack within a stack.
 
 	The big difference is management of the contexts. In a process, they are stacked.
-	In the kernel, they are not. In our case, ARM banking makes them easy to manage.
-	In other architectures, it may be more complex.
+	In the kernel, they are not necessarilly. In our case, ARM banking makes them easy
+	to manage. In other architectures, it may be more complex.
 
 	$r0 = top of userspace stack.
 	*/
@@ -58,12 +70,12 @@ activate:
 	ldmfd r0!, {ip, lr}
 	msr SPSR, ip
 
-	cps #0x1F @ switch to system mode
+	cps #MODE_SYS @ switch to system mode
 
 	mov sp, r0												@ restore userspace stack
 	pop {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,fp,ip,lr}		@ restore userspace registers
-
-	cps #0x13 @ switch to back supervisor mode, $lr = next location in userspace proc
+	pop {r7}												@ r7 saved by interrupt or svc entry
+	cps #MODE_SVC @ switch to back supervisor mode, $lr = next location in userspace proc
 
 	/* ===========================================================================
 	3. Move to userspace proc. The "s" means make CPSR = SPSR atomically.
@@ -88,12 +100,12 @@ svc_entry:
 	right now, we only have CPU context to preserve, i.e. registers. this is easy to do by just pushing them to userspace
 	stack, so we can spare complex memory management for a dedicated struct for now.
 	*/
-	cps #0x1F
+	cps #MODE_SYS
 	
 	push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr} @ save task registers onto its stack
 	mov r0, sp 													   @ save task sp into r0 to survive mode switch
 
-	cps #0x13
+	cps #MODE_SVC
 
 	/* 
 	just like push, but on r0 instead of sp, i.e. to userspace stack
@@ -137,5 +149,58 @@ svc_entry:
 	mov sp, ip
 	bx lr
 
-irq_entry
+/*
+Generic tophalf of interrupt handling. Very similar to svc_entry.
+*/
+irq_entry:
 	
+	/*============================================================================
+	1. Simulate svc entry. Calculate vic number and put it in place syscall nr.
+	============================================================================*/
+	/* 
+	Simulate svc since: 
+		1. Handler in the kernel is the same
+		2. We return to user space via activate(). activate() will restore r7 for userspace proc.
+	*/
+
+	cps #MODE_SYS
+
+	push {r7}
+	ldr r7, =PIC_BASE
+	ldr r7, [r7, #PIC_REG_IRQSTATUS] 		@ r7 now contains the vector number
+
+	/* 
+	Get most significant bits and negate them. 
+
+	We use the same namespace for both irq vectors and syscall numbers.
+	Basically, interrupts are handled by proc 0 (kernel proc). In particular,
+	this irq_entry() function is the top half of interrupt handling. proc 0
+	has the bottom half. This bottom half is shared between interrupts and
+	syscalls.
+
+	This is not a complete top-half. There's no ack here. Kernelspace
+	part has the rest of this and the bottom-half.
+	*/
+	clz r7, r7							@ same as: 		r7 = r7 & 0x00FF
+	sub r7, r7, #31						@ 2^16 = 32; 	r7 = r7 - 31 = -r7 (31 because of how 2's complement works)
+	
+	/*============================================================================
+	2. Save user/kernel state
+	============================================================================*/
+
+	push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}   @ this saves the state of whatever process was interrupted (kernel or user)
+	mov r0, sp														 @ sp is banked
+	
+	cps #MODE_IRQ							@ exceptions set the mode to irq or fiq; here irq
+
+	mrs ip, SPSR
+	sub lr, lr, #0x4						@ because the stupid processor advances it two instructions; doesn't happen on svc
+	stmfd r0!, {ip, lr}
+
+	/*============================================================================
+	2. Switch back to proc 0 to handle the interrupt. proc 0 has the bottom-half.
+	============================================================================*/
+	cps #MODE_SVC
+	pop {r4, r5, r6, r7, r8, r9, r10, fp, ip, lr}
+	mov sp, ip	
+	bx lr
