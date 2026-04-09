@@ -7,4 +7,4 @@ enum {
 };
 
 extern unsigned panic_cause;
-extern void panic(unsigned int cause);
+extern void panic(unsigned int cause, const char *);

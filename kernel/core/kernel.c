@@ -5,15 +5,15 @@
 #include "kernel/task.h"
 #include "kernel/timer.h"
 #include "sched.h"
-#include "uapi/types.h"
 #include "uapi/syscall.h"
+#include "uapi/types.h"
 
 void start_kernel(void) {
 	unsigned int *saved_stack, ret;
 
 	// ============================ SETUP KERNEL SUBSYSTEMS ==========================
 	tasks_init();
-	timer_init(TIMER0, TIMER_PERIODIC, 5); // setup system timer
+	timer_init(TIMER0, TIMER_PERIODIC, 1); // setup system timer
 
 	kprint_string("Kernel started...\n");
 
@@ -23,6 +23,12 @@ void start_kernel(void) {
 		kprint_string("Scheduling task: ");
 		kprint_int(current);
 		kprint_char('\n');
+
+		if (!task_entry_allocated(current))
+			panic(PANIC_ASSERT, "Scheduling unallocated task");
+
+		if (task_waiting(current))
+			panic(PANIC_ASSERT, "Scheduling waiting task");
 
 		saved_stack = activate(tasks[current].sp);
 
@@ -73,8 +79,13 @@ void start_kernel(void) {
 				}
 				break;
 
-			default:
-				panic(PANIC_SYSCALL);
+			default: {
+				char buf[BUF_SIZE] = {};
+				if (!kinttostr(tasks[current].sp[R7], buf))
+					kprint_string("Couldn't convert string: number is likely negative!");
+
+				panic(PANIC_SYSCALL, buf);
+			}
 		}
 
 		//	wait_seconds(1);
@@ -82,8 +93,7 @@ void start_kernel(void) {
 		// 2. Select next process to run
 		do {
 			current = (current + 1) % PROC_NR;
-
-		} while (!task_entry_available(current));
+		} while (!task_runnable(current));
 	};
 
 	kprint_string("After loop...should never reach here\n");

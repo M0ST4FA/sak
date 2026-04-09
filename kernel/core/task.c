@@ -1,5 +1,6 @@
 #include "task.h"
 #include "lib.h"
+#include "panic.h"
 
 size_t task_count = 0, last_pid = 0; // 3 because of initial task count
 unsigned int current = 0;
@@ -15,15 +16,8 @@ unsigned int *task_init(unsigned int *stack, void (*entry_point)(void)) {
 	return stack;
 }
 
-int task_entry_available(int i) {
-
-	if (i >= PROC_NR)
-		return 0;
-
-	if (tasks[i].state == TS_FREE)
-		return 0;
-
-	return 1;
+int task_runnable(int i) {
+	return task_entry_allocated(i) && tasks[i].state == TS_RUNNABLE;
 }
 
 int task_next_pid(void) {
@@ -32,7 +26,7 @@ int task_next_pid(void) {
 
 	do
 		last_pid = (last_pid + 1) % PROC_NR;
-	while (task_entry_available(last_pid));
+	while (task_entry_allocated(last_pid));
 
 	return last_pid;
 }
@@ -46,12 +40,9 @@ void tasks_init(void) {
 	void (**task)(void) = __init_tasks_start;
 
 	for (task = __init_tasks_start; task < __init_tasks_end; task++) {
-		kprint_string("initializing task: ");
-		kprint_int((unsigned int)*task);
-		kprint_string("\n");
 		tasks[task_count].entry_point = *task;
 		tasks[task_count].state = TS_RUNNABLE;
-		tasks[task_count].sp = task_init(stacks[0], *task);
+		tasks[task_count].sp = task_init(stacks[task_count], *task);
 
 		task_count++;
 	}

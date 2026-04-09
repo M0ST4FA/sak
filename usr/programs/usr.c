@@ -44,6 +44,37 @@ void fork_lover(void) {
 		;
 }
 
+void pathserver(void) {
+	while (1)
+		;
+};
+void otherguy(void) {
+	while (1)
+		;
+};
+
+void init(void) {
+	int fd;
+
+	if (!fork())
+		pathserver();
+	if (!fork())
+		otherguy();
+
+	fd = open("/proc/0", 0);
+
+	while (1) {
+		const int str_len = sizeof("Ping\n");
+		const int buf_len = str_len + 4;
+		char buf[sizeof("Ping\n") + 4] = {0};
+
+		memcpy(buf, (char *)&str_len, 4);
+		memcpy(buf + 4, "Ping\n", str_len);
+
+		write(fd, buf, buf_len);
+	}
+}
+
 __attribute__((section(".init"))) void (*print_lover_entry)(void) = print_lover;
 __attribute__((section(".init"))) void (*lesser_print_lover_entry)(void) = lesser_print_lover;
 __attribute__((section(".init"))) void (*fork_lover_entry)(void) = fork_lover;

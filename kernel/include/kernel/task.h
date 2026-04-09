@@ -1,4 +1,5 @@
 #pragma once
+#include "panic.h"
 #include "uapi/types.h"
 
 #define USR_STACK_SZ 1024
@@ -24,10 +25,10 @@
 #define PROC_LR 16
 
 enum task_state {
-	TS_FREE,
-	TS_RUNNABLE,
-	TS_WAIT_READ,
-	TS_WAIT_WRITE,
+	TS_FREE = 0x0,
+	TS_RUNNABLE = 0x2,
+	TS_WAIT_READ = 0x4,
+	TS_WAIT_WRITE = 0x8,
 };
 
 struct task {
@@ -43,6 +44,21 @@ extern struct task tasks[PROC_NR];
 extern unsigned int current;
 
 unsigned int *task_init(unsigned int *stack, void (*entry_point)(void));
-int task_entry_available(int i);
+
+static inline int task_entry_allocated(int i) {
+	if (i >= PROC_NR)
+		panic(PANIC_ASSERT, "task_entry_allocated(i): i > PROC_NR");
+
+	return tasks[i].state != TS_FREE;
+}
+
+static inline int task_waiting(int i) {
+	if (!task_entry_allocated(i)) // assertion
+		panic(PANIC_ASSERT, "task_waiting(i): entry not allocated!");
+
+	return tasks[i].state & (TS_WAIT_READ | TS_WAIT_WRITE);
+}
+
+int task_runnable(int i);
 int task_next_pid(void);
 void tasks_init(void);
