@@ -43,3 +43,7 @@ void fork_lover(void) {
 	while (1)
 		;
 }
+
+__attribute__((section(".init"))) void (*print_lover_entry)(void) = print_lover;
+__attribute__((section(".init"))) void (*lesser_print_lover_entry)(void) = lesser_print_lover;
+__attribute__((section(".init"))) void (*fork_lover_entry)(void) = fork_lover;

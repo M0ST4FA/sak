@@ -2,13 +2,12 @@
 CC	:= arm-none-eabi-gcc
 LD := arm-none-eabi-ld
 CFLAGS := -ffreestanding -pedantic -Wall -Wextra -pedantic -mcpu=cortex-a8 -marm -mapcs-frame -g
-LDFLAGS := -N -T linker.ld -nostdlib -static
+LDFLAGS := -N -T linker/kernel.ld -nostdlib -static
 
 BUILD_DIR := build
 KERNEL_BUILD := ${BUILD_DIR}/kernel
 USR_BUILD := ${BUILD_DIR}/usr
 
-KERNEL_OBJS := ${BUILD_DIR}/kernel/kernel.o
 TARGET := ${BUILD_DIR}/kernel.elf
 
 # =================== RULES ======================
@@ -24,11 +23,9 @@ usr:
 	${MAKE} -C usr BUILD_DIR=../${USR_BUILD}
 
 ${TARGET}: kernel usr
-	${LD} ${LDFLAGS} -o $@  \
-		${KERNEL_OBJS} $(shell find ${USR_BUILD} -name "*.o")
-
-${BUILD_DIR}:
-	mkdir -p ${BUILD_DIR}
+	${LD} ${LDFLAGS} -o $@ \
+		$(shell find ${KERNEL_BUILD} -name "*.o") \
+		$(shell find ${USR_BUILD} -name "*.o")
 
 clean:
 	rm -rf ${BUILD_DIR} 

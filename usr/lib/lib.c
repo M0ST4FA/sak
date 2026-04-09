@@ -1,26 +1,30 @@
 #include "lib.h"
-#include "arch/versatilepb.h"
-#include "uapi/types.h"
+#include "../../kernel/arch/arm/include/arch/versatilepb.h"
+#include "kernel/uapi/types.h"
 
-void kprint_char(char c) {
+void print_char(char c) {
 	*UART0 = c;
 }
 
-void kprint_string(const char *str) {
+void print_string(const char *str) {
 	while (*str)
-		kprint_char(*str++);
+		print_char(*str++);
 }
 
-void kprint_int(int i) {
+void print_int(int i) {
 	char buf[BUF_SIZE] = {0};
 
-	kinttostr(i, buf);
-	kprint_string(buf);
+	inttostr(i, buf);
+	print_string(buf);
 }
 
-void *kmemcpy(char *dst, char *src, int n) {
+int add(int a, int b) {
+	return a + b;
+}
+
+void *memcpy(char *dst, char *src, size_t n) {
 	char *d = dst, *s = src;
-	ssize_t i;
+	size_t i;
 
 	for (i = 0; i < n; i++)
 		d[i] = s[i];
@@ -28,9 +32,9 @@ void *kmemcpy(char *dst, char *src, int n) {
 	return d;
 }
 
-void *kmemset(char *dst, char val, int n) {
+void *memset(char *dst, char val, size_t n) {
 	char *d = dst;
-	ssize_t i;
+	size_t i;
 
 	for (i = 0; i < n; i++)
 		d[i] = val;
@@ -38,7 +42,7 @@ void *kmemset(char *dst, char val, int n) {
 	return d;
 }
 
-void kreverse(char *buf, int size) {
+void reverse(char *buf, int size) {
 	int start = 0;
 	int end = size - 1;
 	int temp;
@@ -55,7 +59,7 @@ void kreverse(char *buf, int size) {
 	}
 }
 
-int kinttostr(int i, char *buf) {
+int inttostr(int i, char *buf) {
 	int div = i, rem = 0, c = 0;
 
 	if (i == 0) {
@@ -73,12 +77,12 @@ int kinttostr(int i, char *buf) {
 
 	buf[c] = '\0';
 
-	kreverse(buf, c);
+	reverse(buf, c);
 
 	return 0;
 }
 
-int kstrcmp(const char *a, const char *b) {
+int strcmp(const char *a, const char *b) {
 	int r = 0;
 
 	while (!r && *a && *b)
@@ -87,7 +91,7 @@ int kstrcmp(const char *a, const char *b) {
 	return (*a) - (*b);
 }
 
-size_t kstrlen(const char *s) {
+size_t strlen(const char *s) {
 	size_t r = 0;
 
 	while (*(s + r++))

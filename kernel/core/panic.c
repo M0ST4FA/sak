@@ -6,18 +6,18 @@ void panic(unsigned int cause) {
 
 	switch (cause) {
 		case PANIC_SYSCALL:
-			print_string("panic: Invalid syscall!\n");
+			kprint_string("panic: Invalid syscall!\n");
 			break;
 
 		case PANIC_ASSERT:
-			print_string("panic: Assertion failed!\n");
+			kprint_string("panic: Assertion failed!\n");
 			break;
 
 		default:
-			print_string("panic: Unknown reason!\n");
+			kprint_string("panic: Unknown reason!\n");
 	}
 
 	asm volatile(
 		"wfi");
-	print_string("After wfi...should never reach here\n");
+	kprint_string("After wfi...should never reach here\n");
 }

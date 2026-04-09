@@ -3,7 +3,7 @@ CC	:= arm-none-eabi-gcc
 LD := arm-none-eabi-ld
 CFLAGS := -ffreestanding -pedantic -Wall -Wextra -pedantic \
 		  -mcpu=cortex-a8 -marm -mapcs-frame -g \
-		  -Iinclude/kernel -Iinclude -Iarch/arm/include -I../shared/include/kernel
+		  -Iinclude -I../shared/include
 
 LDFLAGS := -N -T ../linker/kernel.ld -nostdlib -static
 
@@ -12,7 +12,7 @@ BUILD_DIR ?= build
 C_SRCS := $(shell find . -name "*.c")
 S_SRCS := $(shell find . -name "*.S")
 
-TARGET := ${BUILD_DIR}/kernel.o
+TARGET := ${BUILD_DIR}/usr.o
 ASM_OBJS := $(patsubst %.S,${BUILD_DIR}/%.o,$(S_SRCS))
 C_OBJS := $(patsubst %.c,${BUILD_DIR}/%.o,$(C_SRCS))
 OBJS := ${ASM_OBJS} ${C_OBJS}
@@ -22,7 +22,7 @@ OBJS := ${ASM_OBJS} ${C_OBJS}
 
 all: ${OBJS}
 
-# rule for linking .o into kernel.o
+# rule for linking .o into usr.o
 # ${TARGET}: ${OBJS}
 #	${LD} ${LDFLAGS} -o $@ $^
 

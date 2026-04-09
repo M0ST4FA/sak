@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "uapi/types.h"
 
 #define USR_STACK_SZ 1024
 #define PROC_NR 10

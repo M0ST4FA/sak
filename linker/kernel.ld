@@ -21,8 +21,8 @@ SECTIONS {
 		__data_start = .;
 		*(.data*)
 		__data_end = .;
-		__data_load = LOADADDR(.data);
 	}
+	__data_load = LOADADDR(.data);
 
 	.bss : {
 		__bss_start = .;
@@ -31,6 +31,12 @@ SECTIONS {
 		__bss_end = .;
 	}
 
+	/* Userspace init table */
+	.init : {
+		__init_tasks_start = .;
+		KEEP(*(.init))
+		__init_tasks_end = .;
+	}
 
 	__stack_top = 0x10000;
 }

@@ -1,4 +1,4 @@
-#include "syscall.h"
+#include "kernel/uapi/syscall.h"
 
 .global kernel_yield
 

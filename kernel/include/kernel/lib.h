@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "uapi/types.h"
 
 #define ADD_MAX 10
 #define BUF_SIZE 20
@@ -8,22 +8,20 @@
 extern unsigned int __bss_start;
 extern unsigned int __bss_end;
 
-void print_char(char c);
+void kprint_char(char c);
 
-void print_string(const char *str);
+void kprint_string(const char *str);
 
-void print_int(int i);
+void kprint_int(int i);
 
-int add(int a, int b);
+void *kmemcpy(char *dst, char *src, int n);
 
-void *memcpy(char *dst, char *src, int n);
+void *kmemset(char *dst, char val, int n);
 
-void *memset(char *dst, char val, int n);
+void kreverse(char *buf, int size);
 
-void reverse(char *buf, int size);
+int kinttostr(int i, char *buf);
 
-int inttostr(int i, char *buf);
+int kstrcmp(const char *a, const char *b);
 
-int strcmp(const char *a, const char *b);
-
-size_t strlen(const char *s);
+size_t kstrlen(const char *s);

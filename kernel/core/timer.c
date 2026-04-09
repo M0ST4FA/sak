@@ -16,5 +16,5 @@ void wait_seconds(int seconds) { // kernel uses TIMER1
 
 	asm volatile("wfi"); // irq fires -> fallthrow
 
-	print_string("tick: kernel (which is to say, entire machine) was resting for some time...\n");
+	kprint_string("tick: kernel (which is to say, entire machine) was resting for some time...\n");
 }

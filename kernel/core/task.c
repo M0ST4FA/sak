@@ -1,21 +1,16 @@
 #include "task.h"
-#include "../../usr/include/usr.h"
+#include "lib.h"
 
-size_t task_count = 3, last_pid = 2; // 3 because of initial task count
+size_t task_count = 0, last_pid = 0; // 3 because of initial task count
 unsigned int current = 0;
 
 unsigned int stacks[PROC_NR][USR_STACK_SZ];
-struct task tasks[PROC_NR] = {
-	{.entry_point = print_lover},
-	{.entry_point = lesser_print_lover},
-	{.entry_point = fork_lover},
-};
-
+struct task tasks[PROC_NR];
 unsigned int *task_init(unsigned int *stack, void (*entry_point)(void)) {
 	stack += USR_STACK_SZ - 16;
 
 	stack[0] = 0x10;
-	stack[1] = (unsigned int)entry_point;
+	stack[1] = (unsigned long)entry_point;
 
 	return stack;
 }
@@ -42,13 +37,25 @@ int task_next_pid(void) {
 	return last_pid;
 }
 
+extern void (*__init_tasks_start[])(void);
+extern void (*__init_tasks_end[])(void);
+
 void tasks_init(void) {
 	size_t i;
+	task_count = 0;
+	void (**task)(void) = __init_tasks_start;
 
-	for (i = 0; i < task_count; i++) {
-		tasks[i].sp = task_init(stacks[i], tasks[i].entry_point);
-		tasks[i].state = TS_RUNNABLE;
+	for (task = __init_tasks_start; task < __init_tasks_end; task++) {
+		kprint_string("initializing task: ");
+		kprint_int((unsigned int)*task);
+		kprint_string("\n");
+		tasks[task_count].entry_point = *task;
+		tasks[task_count].state = TS_RUNNABLE;
+		tasks[task_count].sp = task_init(stacks[0], *task);
+
+		task_count++;
 	}
+	last_pid = task_count - 1;
 
 	for (i = task_count; i < PROC_NR; i++) {
 		tasks[i].state = TS_FREE;

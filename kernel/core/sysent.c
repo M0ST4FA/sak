@@ -1,14 +1,14 @@
-#include "kernel/error.h"
+#include "error.h"
 #include "kernel/ipc.h"
 #include "kernel/lib.h"
 #include "kernel/panic.h"
 #include "kernel/task.h"
-#include "types.h"
 #include "uapi/syscall.h"
+#include "uapi/types.h"
 
 // Forward declarations of private functions
-ssize_t write(struct task *);
-ssize_t read(struct task *);
+ssize_t do_write(struct task *);
+ssize_t do_read(struct task *);
 
 int sys_fork(void) {
 	int child_pid, n;
@@ -37,7 +37,7 @@ int sys_fork(void) {
 	// Because of our decision to not have a task struct, copying context = copying stack
 	// Notice how we share text; only stack (which include proc context) is copied
 	n = stack_offset * sizeof(*stacks[current]);
-	memcpy((char *)child_sp, (char *)parent_sp, n);
+	kmemcpy((char *)child_sp, (char *)parent_sp, n);
 
 	// ===== 3. Set up child task struct
 	tasks[child_pid].state = TS_RUNNABLE;
@@ -52,7 +52,7 @@ int sys_fork(void) {
 	return 0;
 }
 
-ssize_t read(struct task *task) {
+ssize_t do_read(struct task *task) {
 	struct pipe_ringbuffer *pipe = 0;
 	size_t pipe_sz = 0, i = 0;
 	ssize_t ret = 0;
@@ -86,13 +86,13 @@ ssize_t read(struct task *task) {
 	// 4. Unblock any task blocking on write syscall
 	for (i = 0; i < task_count; t = &(tasks[i++]))
 		if (t->state == TS_WAIT_WRITE)
-			write(t);
+			do_write(t);
 
 success:
 	return ret;
 }
 
-ssize_t write(struct task *task) {
+ssize_t do_write(struct task *task) {
 	struct pipe_ringbuffer *pipe = 0;
 	size_t pipe_sz = 0, i = 0;
 	ssize_t ret = 0;
@@ -126,15 +126,15 @@ ssize_t write(struct task *task) {
 	// 4. Unblock any task waiting on a read (i.e. in state TS_WAIT_READ)
 	for (i = 0; i < task_count; t = &(tasks[i++]))
 		if (t->state == TS_WAIT_READ)
-			read(t); // Note: proc 0 performs reads & writes on behalf of the task
+			do_read(t); // Note: proc 0 performs reads & writes on behalf of the task
 
 success: // we may need to free some things here in the future
 	return ret;
 }
 
 ssize_t sys_write(void) {
-	return write(&(tasks[current]));
+	return do_write(&(tasks[current]));
 }
 ssize_t sys_read(void) {
-	return read(&(tasks[current]));
+	return do_read(&(tasks[current]));
 }

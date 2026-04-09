@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "kernel/uapi/types.h"
 
 extern void kernel_yield(void);
 extern int fork(void);

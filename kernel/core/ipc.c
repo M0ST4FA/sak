@@ -1,5 +1,5 @@
 #include "ipc.h"
-#include "types.h"
+#include "uapi/types.h"
 
 struct pipe_ringbuffer pipes[PIPE_NR];
 
