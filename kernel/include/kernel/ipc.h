@@ -19,12 +19,12 @@ struct pipe_ringbuffer {
 			(rb)->end = 0;           \
 	} while (0)
 
-#define rb_pop(rb, size, v)            \
-	do {                               \
-		(v) = (rb)->data[(rb)->start]; \
-		(rb)->start++;                 \
-		if ((rb)->start > size)        \
-			(rb)->start = 0;           \
+#define rb_pop(rb, size, v)             \
+	do {                                \
+		*(v) = (rb)->data[(rb)->start]; \
+		(rb)->start++;                  \
+		if ((rb)->start > size)         \
+			(rb)->start = 0;            \
 	} while (0)
 
 #define rb_len(rb, size) ((rb)->end - (rb)->start + \

@@ -4,6 +4,7 @@
 #include "kernel/sysent.h"
 #include "kernel/task.h"
 #include "kernel/timer.h"
+#include "sched.h"
 #include "types.h"
 #include "uapi/syscall.h"
 

@@ -1,7 +1,7 @@
 #include "task.h"
 #include "../../usr/include/usr.h"
 
-int task_count = 3, last_pid = 2; // 3 because of initial task count
+size_t task_count = 3, last_pid = 2; // 3 because of initial task count
 unsigned int current = 0;
 
 unsigned int stacks[PROC_NR][USR_STACK_SZ];
@@ -43,7 +43,7 @@ int task_next_pid(void) {
 }
 
 void tasks_init(void) {
-	int i;
+	size_t i;
 
 	for (i = 0; i < task_count; i++) {
 		tasks[i].sp = task_init(stacks[i], tasks[i].entry_point);

@@ -1,4 +1,5 @@
 #pragma once
+#include "types.h"
 
 #define USR_STACK_SZ 1024
 #define PROC_NR 10
@@ -35,7 +36,7 @@ struct task {
 	unsigned int *sp;
 };
 
-extern int task_count;
+extern size_t task_count;
 
 extern unsigned int stacks[PROC_NR][USR_STACK_SZ];
 extern struct task tasks[PROC_NR];

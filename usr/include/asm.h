@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 
-extern unsigned int *activate(unsigned int *);
 extern void kernel_yield(void);
 extern int fork(void);
 extern int getpid(void);

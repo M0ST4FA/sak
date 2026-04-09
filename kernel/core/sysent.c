@@ -6,6 +6,10 @@
 #include "types.h"
 #include "uapi/syscall.h"
 
+// Forward declarations of private functions
+ssize_t write(struct task *);
+ssize_t read(struct task *);
+
 int sys_fork(void) {
 	int child_pid, n;
 	unsigned int *parent_sp, *parent_stack_top, *child_stack_top, *child_sp;
@@ -48,21 +52,56 @@ int sys_fork(void) {
 	return 0;
 }
 
-int read(struct task *task) {
-}
-
-int write(struct task *task, int fd) {
-}
-
-int sys_write(void) {
-	struct task *task = &tasks[current];
+ssize_t read(struct task *task) {
 	struct pipe_ringbuffer *pipe = 0;
-	size_t pipe_left = 0, i = 0;
+	size_t pipe_sz = 0, i = 0;
+	ssize_t ret = 0;
+	struct task *t = 0;
+
+	// 1. Read syscall arguments
+	const int fd = task->sp[R0];
+	char *user_buf = 0;
+	const size_t count = task->sp[R2];
+
+	// 2. Check limits
+	if (fd > PIPE_NR)
+		return -EBADF;
+	if (count > BUF_SIZE)
+		return -EMSGSIZE;
+
+	// 3. Perform the actual read
+	pipe = &pipes[fd];
+	pipe_sz = pipe_len(pipe);
+
+	if (count > pipe_sz) {
+		task->state = TS_WAIT_READ;
+		goto success;
+	}
+
+	user_buf = (char *)task->sp[R1];
+	for (i = 0; i < count; i++)
+		pipe_pop(pipe, user_buf++);
+	ret = i; // how many elements did we (proc 0) give to user proc?
+
+	// 4. Unblock any task blocking on write syscall
+	for (i = 0; i < task_count; t = &(tasks[i++]))
+		if (t->state == TS_WAIT_WRITE)
+			write(t);
+
+success:
+	return ret;
+}
+
+ssize_t write(struct task *task) {
+	struct pipe_ringbuffer *pipe = 0;
+	size_t pipe_sz = 0, i = 0;
+	ssize_t ret = 0;
+	struct task *t = 0;
 
 	// 1. Read syscall arguments
 	const int fd = task->sp[R0];
 	char *user_buf = 0; // read later; you may err before you need it
-	const int count = task->sp[R1];
+	const size_t count = task->sp[R1];
 
 	// 2. Check limits
 	if (fd > PIPE_NR)
@@ -72,9 +111,9 @@ int sys_write(void) {
 
 	// 3. Perform the actual write
 	pipe = &pipes[fd];
-	pipe_left = pipe_len(pipe);
+	pipe_sz = pipe_len(pipe);
 
-	if (pipe_left < count) {
+	if (pipe_sz < count) {
 		task->state = TS_WAIT_WRITE;
 		goto success;
 	}
@@ -82,12 +121,20 @@ int sys_write(void) {
 	user_buf = (char *)task->sp[R1];
 	for (i = 0; i < count; i++)
 		pipe_push(pipe, user_buf[i]);
+	ret = i; // how many elements did we (proc 0) read from user proc?
 
 	// 4. Unblock any task waiting on a read (i.e. in state TS_WAIT_READ)
-	for (i = 0; i < task_count; i++)
-		if (tasks[i].state == TS_WAIT_READ)
-			read(task);
+	for (i = 0; i < task_count; t = &(tasks[i++]))
+		if (t->state == TS_WAIT_READ)
+			read(t); // Note: proc 0 performs reads & writes on behalf of the task
 
 success: // we may need to free some things here in the future
-	return 0;
+	return ret;
+}
+
+ssize_t sys_write(void) {
+	return write(&(tasks[current]));
+}
+ssize_t sys_read(void) {
+	return read(&(tasks[current]));
 }
