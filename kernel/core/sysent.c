@@ -1,8 +1,10 @@
-#include "syscall.h"
-#include "lib.h"
-#include "panic.h"
-#include "task.h"
+#include "kernel/error.h"
+#include "kernel/ipc.h"
+#include "kernel/lib.h"
+#include "kernel/panic.h"
+#include "kernel/task.h"
 #include "types.h"
+#include "uapi/syscall.h"
 
 int sys_fork(void) {
 	int child_pid, n;
@@ -43,5 +45,49 @@ int sys_fork(void) {
 	parent_sp[R0] = child_pid;
 	child_sp[R0] = 0;
 
+	return 0;
+}
+
+int read(struct task *task) {
+}
+
+int write(struct task *task, int fd) {
+}
+
+int sys_write(void) {
+	struct task *task = &tasks[current];
+	struct pipe_ringbuffer *pipe = 0;
+	size_t pipe_left = 0, i = 0;
+
+	// 1. Read syscall arguments
+	const int fd = task->sp[R0];
+	char *user_buf = 0; // read later; you may err before you need it
+	const int count = task->sp[R1];
+
+	// 2. Check limits
+	if (fd > PIPE_NR)
+		return -EBADF;
+	if (count > BUF_SIZE)
+		return -EMSGSIZE;
+
+	// 3. Perform the actual write
+	pipe = &pipes[fd];
+	pipe_left = pipe_len(pipe);
+
+	if (pipe_left < count) {
+		task->state = TS_WAIT_WRITE;
+		goto success;
+	}
+
+	user_buf = (char *)task->sp[R1];
+	for (i = 0; i < count; i++)
+		pipe_push(pipe, user_buf[i]);
+
+	// 4. Unblock any task waiting on a read (i.e. in state TS_WAIT_READ)
+	for (i = 0; i < task_count; i++)
+		if (tasks[i].state == TS_WAIT_READ)
+			read(task);
+
+success: // we may need to free some things here in the future
 	return 0;
 }

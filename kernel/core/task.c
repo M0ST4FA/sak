@@ -1,5 +1,5 @@
 #include "task.h"
-#include "usr.h"
+#include "../../usr/include/usr.h"
 
 int task_count = 3, last_pid = 2; // 3 because of initial task count
 unsigned int current = 0;

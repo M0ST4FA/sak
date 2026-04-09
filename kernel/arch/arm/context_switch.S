@@ -1,5 +1,5 @@
-#include "versatilepb.h"
-#include "armv7.h"
+#include "arch/versatilepb.h"
+#include "arch/armv7.h"
 
 .global activate
 .global svc_entry

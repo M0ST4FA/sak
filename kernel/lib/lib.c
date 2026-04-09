@@ -1,6 +1,6 @@
 #include "lib.h"
+#include "arch/versatilepb.h"
 #include "types.h"
-#include "versatilepb.h"
 
 void print_char(char c) {
 	*UART0 = c;
@@ -80,4 +80,22 @@ int inttostr(int i, char *buf) {
 	reverse(buf, c);
 
 	return 0;
+}
+
+int strcmp(const char *a, const char *b) {
+	int r = 0;
+
+	while (!r && *a && *b)
+		r = (*a++) - (*b++);
+
+	return (*a) - (*b);
+}
+
+size_t strlen(const char *s) {
+	size_t r = 0;
+
+	while (*(s + r++))
+		;
+
+	return r;
 }

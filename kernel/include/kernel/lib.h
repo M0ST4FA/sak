@@ -1,4 +1,5 @@
 #pragma once
+#include "types.h"
 
 #define ADD_MAX 10
 #define BUF_SIZE 20
@@ -22,3 +23,7 @@ void *memset(char *dst, char val, int n);
 void reverse(char *buf, int size);
 
 int inttostr(int i, char *buf);
+
+int strcmp(const char *a, const char *b);
+
+size_t strlen(const char *s);

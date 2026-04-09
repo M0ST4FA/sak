@@ -1,4 +1,4 @@
-#include "panic.h"
+#include "kernel/panic.h"
 #include "lib.h"
 
 void panic(unsigned int cause) {

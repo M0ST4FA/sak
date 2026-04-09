@@ -1,37 +1,32 @@
+# =================== VARIABLES ======================
 CC	:= arm-none-eabi-gcc
 LD := arm-none-eabi-ld
 CFLAGS := -ffreestanding -pedantic -Wall -Wextra -pedantic -mcpu=cortex-a8 -marm -mapcs-frame -g
 LDFLAGS := -N -T linker.ld -nostdlib -static
 
 BUILD_DIR := build
+KERNEL_BUILD := ${BUILD_DIR}/kernel
+USR_BUILD := ${BUILD_DIR}/usr
 
-# SRC := $(wildcard *.c)
-SRC :=
-
+KERNEL_OBJS := ${BUILD_DIR}/kernel/kernel.o
 TARGET := ${BUILD_DIR}/kernel.elf
-ASM-OBJS := ${BUILD_DIR}/bootstrap.o ${BUILD_DIR}/context_switch.o ${BUILD_DIR}/syscall.o
-C-OBJS := ${BUILD_DIR}/kernel.o ${BUILD_DIR}/lib.o ${BUILD_DIR}/usr.o \
-			${BUILD_DIR}/task.o ${BUILD_DIR}/panic.o ${BUILD_DIR}/timer.o \
-			${BUILD_DIR}/sysent.o ${BUILD_DIR}/ipc.o
-OBJS := ${ASM-OBJS} ${C-OBJS}
 
-.PHONY: all clean run-qemu run-qemu-debug
+# =================== RULES ======================
+.PHONY: all kernel usr clean bear run-qemu run-qemu-debug
 
+# BUILDING RULES
 all: ${TARGET}
 
-# rule for linking .o into kernel.elf
-${TARGET}: ${OBJS} ${SRC} | ${BUILD_DIR}
-	${LD} ${LDFLAGS} -o $@ $^
+kernel:
+	${MAKE} -C kernel BUILD_DIR=../${KERNEL_BUILD}
 
-# rule for C -> .o
-${BUILD_DIR}/%.o: %.c | ${BUILD_DIR}
-	${CC} ${CFLAGS} -c -o $@ $<
+usr:
+	${MAKE} -C usr BUILD_DIR=../${USR_BUILD}
 
-# rule for assembly -> .o
-${BUILD_DIR}/%.o: %.S | ${BUILD_DIR}
-	${CC} ${CFLAGS} -c -o $@ $<
+${TARGET}: kernel usr
+	${LD} ${LDFLAGS} -o $@  \
+		${KERNEL_OBJS} $(shell find ${USR_BUILD} -name "*.o")
 
-# create directory if dones't exist
 ${BUILD_DIR}:
 	mkdir -p ${BUILD_DIR}
 
@@ -40,6 +35,8 @@ clean:
 
 bear:
 	bear -- make ${TARGET}
+
+# RUNNING RULES
 
 run-qemu: ${TARGET}
 	qemu-system-arm \

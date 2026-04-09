@@ -1,6 +1,6 @@
 #include "timer.h"
+#include "arch/versatilepb.h"
 #include "lib.h"
-#include "versatilepb.h"
 
 void timer_init(volatile unsigned int *timer, int mode, int seconds) {
 	// 1. Tell VIC to accept interrupts from timer0
