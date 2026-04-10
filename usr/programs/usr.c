@@ -1,5 +1,7 @@
 #include "usr.h"
 #include "asm.h"
+#include "fs.h"
+#include "kernel/uapi/limits.h"
 #include "lib.h"
 
 void print_lover(void) {
@@ -45,13 +47,51 @@ void fork_lover(void) {
 }
 
 void pathserver(void) {
-	while (1)
-		;
-};
+	char paths[PIPE_NR - PROC_NR - 3][PATH_MAX];
+	int npaths = 0, i = 0;
+	unsigned int plen = 0, replyfd = 0;
+	char path[PATH_MAX];
+
+	memcpy(paths[npaths++], "/sys/pathserver", sizeof("/sys/pathserver"));
+
+	while (1) {
+		read(PATHSERVER_FD, &replyfd, 4);
+		read(PATHSERVER_FD, &plen, 4);
+		read(PATHSERVER_FD, path, plen);
+
+		if (!replyfd) { // Register a new path
+			memcpy(paths[npaths++], path, plen);
+			continue;
+		}
+
+		for (i = 0; i < npaths; i++)
+			if (*paths[i] && strcmp(path, paths[i]) == 0) {
+				i += 3;
+				i += PROC_NR;
+				write(replyfd, &i, 4);
+				i = 0;
+				break;
+			}
+
+		if (i >= npaths) {
+			i = -1; // ENOTFOUND, i will be reset in the for loop next iteration
+			write(replyfd, &i, 4);
+		}
+	};
+}
+
 void otherguy(void) {
-	while (1)
-		;
-};
+	int fd = 0;
+	unsigned int len = 0;
+	char buf[20];
+	mkfifo("/proc/0", 0);
+	fd = open("/proc/0", 0);
+	while (1) {
+		read(fd, &len, 4);
+		read(fd, buf, len);
+		print_string(buf);
+	}
+}
 
 void init(void) {
 	int fd;
@@ -75,6 +115,4 @@ void init(void) {
 	}
 }
 
-__attribute__((section(".init"))) void (*print_lover_entry)(void) = print_lover;
-__attribute__((section(".init"))) void (*lesser_print_lover_entry)(void) = lesser_print_lover;
-__attribute__((section(".init"))) void (*fork_lover_entry)(void) = fork_lover;
+__attribute__((section(".init"))) void (*init_address)(void) = init;

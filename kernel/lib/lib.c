@@ -56,7 +56,12 @@ void kreverse(char *buf, int size) {
 }
 
 int kinttostr(int i, char *buf) {
-	int div = i, rem = 0, c = 0;
+	int div = i, rem = 0, c = 0, neg = 0;
+
+	if (i < 0) {
+		neg = 1;
+		div = -i;
+	}
 
 	if (i == 0) {
 		buf[c++] = '0';
@@ -70,6 +75,9 @@ int kinttostr(int i, char *buf) {
 
 		div /= 10;
 	} while (div > 0);
+
+	if (neg)
+		buf[c++] = '-';
 
 	buf[c] = '\0';
 

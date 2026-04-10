@@ -1,9 +1,8 @@
 #pragma once
 #include "uapi/types.h"
 
-#define ADD_MAX 10
 #define BUF_SIZE 20
-#define ERANGE 2
+#define MSG_SIZE 512
 
 extern unsigned int __bss_start;
 extern unsigned int __bss_end;

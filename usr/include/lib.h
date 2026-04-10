@@ -16,7 +16,7 @@ void print_int(int i);
 
 int add(int a, int b);
 
-void *memcpy(char *dst, char *src, size_t n);
+void *memcpy(char *dst, const char *src, size_t n);
 
 void *memset(char *dst, char val, size_t n);
 

@@ -3,6 +3,7 @@
 #include "kernel/lib.h"
 #include "kernel/panic.h"
 #include "kernel/task.h"
+#include "lib.h"
 #include "uapi/syscall.h"
 #include "uapi/types.h"
 
@@ -66,7 +67,7 @@ ssize_t do_read(struct task *task) {
 	// 2. Check limits
 	if (fd > PIPE_NR)
 		return -EBADF;
-	if (count > BUF_SIZE)
+	if (count > PIPE_BUF_SZ)
 		return -EMSGSIZE;
 
 	// 3. Perform the actual read
@@ -101,12 +102,12 @@ ssize_t do_write(struct task *task) {
 	// 1. Read syscall arguments
 	const int fd = task->sp[R0];
 	char *user_buf = 0; // read later; you may err before you need it
-	const size_t count = task->sp[R1];
+	const size_t count = task->sp[R2];
 
 	// 2. Check limits
 	if (fd > PIPE_NR)
 		return -EBADF;
-	if (count > BUF_SIZE)
+	if (count > PIPE_BUF_SZ)
 		return -EMSGSIZE;
 
 	// 3. Perform the actual write
@@ -130,6 +131,13 @@ ssize_t do_write(struct task *task) {
 
 success: // we may need to free some things here in the future
 	return ret;
+}
+
+int sys_getpid(void) {
+	const struct task *t = &(tasks[current]);
+	t->sp[R0] = current;
+
+	return current;
 }
 
 ssize_t sys_write(void) {

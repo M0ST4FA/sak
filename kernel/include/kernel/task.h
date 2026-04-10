@@ -1,9 +1,7 @@
 #pragma once
 #include "panic.h"
+#include "uapi/limits.h"
 #include "uapi/types.h"
-
-#define USR_STACK_SZ 1024
-#define PROC_NR 10
 
 // Indicies into top of userspace stack (task struct fields)
 #define SPSR 0

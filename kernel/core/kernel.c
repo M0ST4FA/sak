@@ -52,6 +52,14 @@ void start_kernel(void) {
 				}
 				break;
 
+			case SYSCALL_GETPID:
+				if ((ret = sys_getpid())) {
+					kprint_string("write: Error during getpid (");
+					kprint_int(ret);
+					kprint_string(")\n");
+				}
+				break;
+
 			case SYSCALL_WRITE:
 				if ((ret = sys_write())) {
 					kprint_string("write: Error during write (");
@@ -80,9 +88,9 @@ void start_kernel(void) {
 				break;
 
 			default: {
-				char buf[BUF_SIZE] = {};
-				if (!kinttostr(tasks[current].sp[R7], buf))
-					kprint_string("Couldn't convert string: number is likely negative!");
+				char buf[BUF_SIZE] = {0};
+				kinttostr(tasks[current].sp[R7], buf);
+				// kprint_string("Couldn't convert string: number is likely negative!\n");
 
 				panic(PANIC_SYSCALL, buf);
 			}

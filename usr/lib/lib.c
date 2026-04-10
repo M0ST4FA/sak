@@ -22,7 +22,7 @@ int add(int a, int b) {
 	return a + b;
 }
 
-void *memcpy(char *dst, char *src, size_t n) {
+void *memcpy(char *dst, const char *src, size_t n) {
 	char *d = dst, *s = src;
 	size_t i;
 
