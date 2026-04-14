@@ -36,7 +36,8 @@ struct task {
 };
 
 extern size_t task_count;
-
+// rule: increment each time you make a task runnable; decrement each time you make a task wait
+extern size_t runnable_count;
 extern unsigned int stacks[PROC_NR][USR_STACK_SZ];
 extern struct task tasks[PROC_NR];
 extern unsigned int current;

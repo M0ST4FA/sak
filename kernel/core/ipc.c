@@ -1,7 +1,7 @@
 #include "ipc.h"
 #include "uapi/types.h"
 
-struct pipe_ringbuffer pipes[PIPE_NR];
+struct pipe_ringbuffer pipes[PIPE_NR + 5];
 
 void ipc_init(void) {
 	size_t i;

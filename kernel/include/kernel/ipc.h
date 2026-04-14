@@ -32,6 +32,6 @@ struct pipe_ringbuffer {
 #define pipe_pop(pipe, v) rb_pop((pipe), PIPE_BUF_SZ, (v))
 #define pipe_len(pipe) (rb_len((pipe), PIPE_BUF_SZ))
 
-extern struct pipe_ringbuffer pipes[PIPE_NR];
+extern struct pipe_ringbuffer pipes[];
 
 extern void ipc_init(void);

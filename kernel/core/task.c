@@ -2,7 +2,7 @@
 #include "lib.h"
 #include "panic.h"
 
-size_t task_count = 0, last_pid = 0; // 3 because of initial task count
+size_t task_count = 0, runnable_count = 0, last_pid = 0; // 3 because of initial task count
 unsigned int current = 0;
 
 unsigned int stacks[PROC_NR][USR_STACK_SZ];
@@ -42,6 +42,7 @@ void tasks_init(void) {
 	for (task = __init_tasks_start; task < __init_tasks_end; task++) {
 		tasks[task_count].entry_point = *task;
 		tasks[task_count].state = TS_RUNNABLE;
+		runnable_count++;
 		tasks[task_count].sp = task_init(stacks[task_count], *task);
 
 		task_count++;

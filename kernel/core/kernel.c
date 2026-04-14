@@ -45,7 +45,7 @@ void start_kernel(void) {
 				break;
 
 			case SYSCALL_FORK:
-				if ((ret = sys_fork())) {
+				if ((ret = sys_fork()) < 0) {
 					kprint_string("fork: Error during fork (");
 					kprint_int(ret);
 					kprint_string(")\n");
@@ -53,7 +53,7 @@ void start_kernel(void) {
 				break;
 
 			case SYSCALL_GETPID:
-				if ((ret = sys_getpid())) {
+				if ((ret = sys_getpid()) < 0) {
 					kprint_string("write: Error during getpid (");
 					kprint_int(ret);
 					kprint_string(")\n");
@@ -61,14 +61,14 @@ void start_kernel(void) {
 				break;
 
 			case SYSCALL_WRITE:
-				if ((ret = sys_write())) {
+				if ((ret = sys_write()) < 0) {
 					kprint_string("write: Error during write (");
 					kprint_int(ret);
 					kprint_string(")\n");
 				}
 				break;
 			case SYSCALL_READ:
-				if ((ret = sys_read())) {
+				if ((ret = sys_read()) < 0) {
 					kprint_string("read: Error during read (");
 					kprint_int(ret);
 					kprint_string(")\n");
@@ -97,6 +97,11 @@ void start_kernel(void) {
 		}
 
 		//	wait_seconds(1);
+		if (!runnable_count) {
+			kprint_string("No runnable tasks...going to sleep\n");
+
+			asm volatile("wfi");
+		}
 
 		// 2. Select next process to run
 		do {

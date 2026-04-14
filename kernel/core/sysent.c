@@ -4,7 +4,6 @@
 #include "kernel/panic.h"
 #include "kernel/task.h"
 #include "lib.h"
-#include "uapi/syscall.h"
 #include "uapi/types.h"
 
 // Forward declarations of private functions
@@ -45,6 +44,7 @@ int sys_fork(void) {
 	tasks[child_pid].entry_point = tasks[current].entry_point;
 	tasks[child_pid].sp = child_sp;
 	task_count++;
+	runnable_count++;
 
 	// ===== 4. Set return values for parent and child
 	parent_sp[R0] = child_pid;
@@ -54,6 +54,9 @@ int sys_fork(void) {
 }
 
 ssize_t do_read(struct task *task) {
+	task->state = TS_RUNNABLE;
+	runnable_count++;
+
 	struct pipe_ringbuffer *pipe = 0;
 	size_t pipe_sz = 0, i = 0;
 	ssize_t ret = 0;
@@ -70,12 +73,13 @@ ssize_t do_read(struct task *task) {
 	if (count > PIPE_BUF_SZ)
 		return -EMSGSIZE;
 
-	// 3. Perform the actual read
 	pipe = &pipes[fd];
 	pipe_sz = pipe_len(pipe);
 
+	// if the count (in bytes) of what we're reading is greater than what we already have in buffer
 	if (count > pipe_sz) {
 		task->state = TS_WAIT_READ;
+		runnable_count--;
 		goto success;
 	}
 
@@ -85,17 +89,22 @@ ssize_t do_read(struct task *task) {
 	ret = i; // how many elements did we (proc 0) give to user proc?
 
 	// 4. Unblock any task blocking on write syscall
-	for (i = 0; i < task_count; t = &(tasks[i++]))
+	for (i = 0; i < task_count; i++) {
+		t = &tasks[i];
 		if (t->state == TS_WAIT_WRITE)
 			do_write(t);
+	}
 
 success:
 	return ret;
 }
 
 ssize_t do_write(struct task *task) {
+	task->state = TS_RUNNABLE;
+	runnable_count++;
+
 	struct pipe_ringbuffer *pipe = 0;
-	size_t pipe_sz = 0, i = 0;
+	size_t pipe_sz = 0, pipe_available = 0, i = 0;
 	ssize_t ret = 0;
 	struct task *t = 0;
 
@@ -113,9 +122,12 @@ ssize_t do_write(struct task *task) {
 	// 3. Perform the actual write
 	pipe = &pipes[fd];
 	pipe_sz = pipe_len(pipe);
+	pipe_available = PIPE_BUF_SZ - pipe_sz;
 
-	if (pipe_sz < count) {
+	// if the size (in bytes) of what we're writing is greater than the capacity we have now
+	if (count > pipe_available) {
 		task->state = TS_WAIT_WRITE;
+		runnable_count--;
 		goto success;
 	}
 
@@ -125,9 +137,11 @@ ssize_t do_write(struct task *task) {
 	ret = i; // how many elements did we (proc 0) read from user proc?
 
 	// 4. Unblock any task waiting on a read (i.e. in state TS_WAIT_READ)
-	for (i = 0; i < task_count; t = &(tasks[i++]))
+	for (i = 0; i < task_count; i++) {
+		t = &tasks[i];
 		if (t->state == TS_WAIT_READ)
-			do_read(t); // Note: proc 0 performs reads & writes on behalf of the task
+			do_read(t);
+	}
 
 success: // we may need to free some things here in the future
 	return ret;
